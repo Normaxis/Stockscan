@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StockScan — Inventaire moteurs</title><style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#14213b;background:#f3f6fa}
+*{box-sizing:border-box}body{margin:0}header{background:#10233f;color:white;padding:19px 5vw;display:flex;align-items:center;justify-content:space-between}
+header strong{font-size:1.5rem}small{color:#68809b}header small{color:#b2c7df}
+main{max-width:1120px;margin:auto;padding:28px 16px}.stats,.tabs{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px}.stats article{flex:1;min-width:150px;background:white;border-radius:14px;padding:18px;box-shadow:0 3px 12px #14213b0a}
+.stats b{font-size:2rem;display:block;color:#174a91}.stats span{color:#526680}
+.tabs button{background:#e4eaf2;color:#173b69}.tabs button.active{background:#174a91;color:white}
+button{border:0;border-radius:10px;padding:12px 17px;font-weight:650;cursor:pointer;background:#1763c3;color:white}
+button.secondary{background:#eaf1f9;color:#174a91}button.danger{background:#a92e37}
+.panel{background:white;border:1px solid #dde5ee;border-radius:15px;padding:24px;margin:14px 0;box-shadow:0 3px 16px #152f5008}
+h2{margin:0 0 16px}label{display:block;font-size:.9rem;font-weight:600;margin:12px 0 5px}
+input,textarea,select{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:11px;font:inherit;background:white}
+textarea{min-height:110px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
+.notice{padding:13px;border-radius:10px;background:#eaf2fb;color:#224f85;margin:15px 0}.error{background:#ffe8e9;color:#a52e37}.success{background:#e2f7e9;color:#1b6c39}
+table{width:100%;border-collapse:collapse;font-size:.93rem}td,th{text-align:left;padding:12px;border-bottom:1px solid #e4eaf2}
+.wrap{overflow:auto}.hidden{display:none}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+@media(max-width:660px){.grid{grid-template-columns:1fr}main{padding:15px 10px}.panel{padding:16px}header{padding:16px}}
+</style></head><body>
+<header><strong>▣ STOCKSCAN</strong><small>Inventaire moteurs • Démonstration locale</small></header>
+<main>
+<div class="stats"><article><b id="stMot">0</b><span>Moteurs</span></article><article><b id="stCol">0</b><span>Colis</span></article><article><b id="stRef">0</b><span>Références</span></article></div>
+<div class="tabs"><button data-tab="colis" class="active">Scanner un colis</button><button data-tab="isole">Moteur isolé</button><button data-tab="inventaire">Inventaire</button><button data-tab="recherche">Rechercher</button></div>
+<section id="colis" class="panel"><h2>Étiquette complète</h2>
+<label>Photographier / importer l’étiquette</label><input type="file" id="fcol" accept="image/*" capture="environment"><button class="secondary" id="ocrCol">Lire l’étiquette (OCR)</button>
+<div class="notice">Vérifiez toutes les informations avant validation. La lecture OCR nécessite Internet lors de la première utilisation.</div>
+<div class="grid"><div><label>Référence pièce *</label><input id="cRef" placeholder="100019303R"></div><div><label>Modèle moteur</label><input id="cMod" placeholder="M9R 717"></div>
+<div><label>Désignation</label><input id="cDes"></div><div><label>N° étiquette *</label><input id="cEti" placeholder="24386010"></div>
+<div><label>Quantité annoncée *</label><input id="cQty" type="number" min="1" value="6"></div><div><label>Date fabrication</label><input id="cDate" placeholder="06/11/26"></div>
+<div><label>Fournisseur</label><input id="cFou"></div><div><label>N° lot</label><input id="cLot"></div></div>
+<label>Numéros moteurs (un par ligne, commençant par C) *</label><textarea id="cNums" placeholder="C575161&#10;C575162&#10;C575163"></textarea>
+<div id="cStatus" class="notice">Saisissez les numéros moteurs, puis validez.</div><button id="saveCol">Enregistrer le colis</button></section>
+<section id="isole" class="panel hidden"><h2>Moteur isolé</h2><label>Photo de l’étiquette</label><input type="file" id="fiso" accept="image/*" capture="environment"><button class="secondary" id="ocrIso">Lire le numéro (OCR)</button>
+<div class="grid"><div><label>N° moteur *</label><input id="iNum" placeholder="C575167"></div><div><label>Référence pièce *</label><input id="iRef" list="refs" placeholder="100019303R"><datalist id="refs"></datalist></div>
+<div><label>Modèle</label><input id="iMod"></div><div><label>Désignation</label><input id="iDes"></div></div><label>Commentaire</label><textarea id="iComment"></textarea><div id="iStatus"></div><button id="saveIso">Enregistrer +1 moteur</button></section>
+<section id="inventaire" class="panel hidden"><h2>Synthèse de l’inventaire</h2><div class="actions"><button id="exportCsv">Exporter CSV (Excel)</button><button id="exportJson" class="secondary">Sauvegarde JSON</button><label class="secondary" style="margin:0">Restaurer JSON <input id="importJson" type="file" accept=".json,application/json"></label></div>
+<div class="wrap"><table><thead><tr><th>Référence</th><th>Modèle</th><th>Désignation</th><th>Qté</th><th>Colis</th><th>Isolés</th></tr></thead><tbody id="invRows"></tbody></table></div>
+<h2 style="margin-top:25px">Détail des moteurs</h2><div class="wrap"><table><thead><tr><th>Numéro</th><th>Référence</th><th>Origine</th><th>Étiquette</th><th>Date scan</th></tr></thead><tbody id="detailRows"></tbody></table></div></section>
+<section id="recherche" class="panel hidden"><h2>Rechercher un moteur</h2><input id="search" placeholder="Numéro moteur, référence, modèle, étiquette…"><div class="wrap"><table><thead><tr><th>Moteur</th><th>Référence</th><th>Modèle</th><th>Étiquette</th></tr></thead><tbody id="searchRows"></tbody></table></div></section>
+<p><small>Version de démonstration : les données restent dans ce navigateur, sans synchronisation centralisée ni connexion utilisateur. Pour la version serveur complète, utilisez le paquet StockScan fourni séparément.</small></p>
+</main><script>
+const $=id=>document.getElementById(id), KEY='stockscan-demo-1';let data=[];try{data=JSON.parse(localStorage.getItem(KEY)||'[]')}catch{data=[]}
+const clean=s=>String(s||'').trim().toUpperCase(), valid=s=>/^C[A-Z0-9]{5,15}$/.test(s), nums=s=>[...new Set(String(s).toUpperCase().match(/\bC[A-Z0-9]{5,15}\b/g)||[])];
+function persist(){localStorage.setItem(KEY,JSON.stringify(data));refresh()}
+function message(id,s,ok){$(id).className='notice '+(ok?'success':'error');$(id).textContent=s}
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));['colis','isole','inventaire','recherche'].forEach(id=>$(id).classList.toggle('hidden',id!==b.dataset.tab));refresh()});
+$('cNums').oninput=()=>{let n=nums($('cNums').value),q=+$('cQty').value;message('cStatus',n.length+' numéro(s) sur '+q+' annoncé(s).',n.length===q&&q>0)};
+$('cQty').oninput=$('cNums').oninput;
+$('saveCol').onclick=()=>{let ref=clean($('cRef').value),lab=clean($('cEti').value),qty=+$('cQty').value,n=nums($('cNums').value),raw=$('cNums').value.toUpperCase().split(/[\s,;]+/).filter(Boolean);
+if(!ref||!lab||!Number.isInteger(qty)||qty<1)return message('cStatus','Référence, étiquette et quantité valide obligatoires.',false);
+if(n.length!==qty||raw.length!==qty)return message('cStatus','Quantité incorrecte : exactement '+qty+' numéros moteurs distincts valides sont requis.',false);
+if(data.some(x=>x.label===lab))return message('cStatus','Cette étiquette existe déjà.',false);
+let duplicates=n.filter(v=>data.some(x=>x.num===v));if(duplicates.length)return message('cStatus','Moteurs déjà enregistrés : '+duplicates.join(', '),false);
+let now=new Date().toISOString();for(let num of n)data.push({num,ref,label:lab,type:'colis',model:$('cMod').value,designation:$('cDes').value,made:$('cDate').value,supplier:$('cFou').value,lot:$('cLot').value,scanned:now});persist();message('cStatus','Colis enregistré : '+qty+' moteurs.',true);$('cNums').value=''};
+$('saveIso').onclick=()=>{let num=clean($('iNum').value),ref=clean($('iRef').value);if(!valid(num)||!ref)return message('iStatus','Numéro C valide et référence obligatoires.',false);
+if(data.some(x=>x.num===num))return message('iStatus','Doublon : ce moteur existe déjà.',false);
+data.push({num,ref,label:'',type:'isolé',model:$('iMod').value,designation:$('iDes').value,comment:$('iComment').value,scanned:new Date().toISOString()});persist();message('iStatus','Moteur enregistré avec quantité +1.',true);$('iNum').value=''};
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function refresh(){let refs=new Map();for(let r of data){let a=refs.get(r.ref)||{ref:r.ref,model:r.model,des:r.designation,qty:0,labels:new Set(),isolated:0};a.qty++;if(r.label)a.labels.add(r.label);else a.isolated++;refs.set(r.ref,a)}
+$('stMot').textContent=data.length;$('stCol').textContent=new Set(data.map(x=>x.label).filter(Boolean)).size;$('stRef').textContent=refs.size;
+$('refs').innerHTML=[...refs.keys()].map(r=>'<option value="'+escapeHtml(r)+'">').join('');
+$('invRows').innerHTML=[...refs.values()].map(r=>'<tr><td>'+escapeHtml(r.ref)+'</td><td>'+escapeHtml(r.model)+'</td><td>'+escapeHtml(r.des)+'</td><td>'+r.qty+'</td><td>'+r.labels.size+'</td><td>'+r.isolated+'</td></tr>').join('');
+$('detailRows').innerHTML=data.map(r=>'<tr><td>'+escapeHtml(r.num)+'</td><td>'+escapeHtml(r.ref)+'</td><td>'+escapeHtml(r.type)+'</td><td>'+escapeHtml(r.label)+'</td><td>'+escapeHtml(r.scanned.slice(0,16))+'</td></tr>').join('');search()}
+function search(){let q=clean($('search').value);$('searchRows').innerHTML=data.filter(r=>[r.num,r.ref,r.model,r.label].some(x=>clean(x).includes(q))).map(r=>'<tr><td>'+escapeHtml(r.num)+'</td><td>'+escapeHtml(r.ref)+'</td><td>'+escapeHtml(r.model)+'</td><td>'+escapeHtml(r.label)+'</td></tr>').join('')}
+$('search').oninput=search;function download(filename,content,type){let u=URL.createObjectURL(new Blob([content],{type}));let a=document.createElement('a');a.href=u;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}
+$('exportCsv').onclick=()=>{let fields=['ref','designation','model','num','label','type','made','lot','supplier','scanned'];let names=['Référence pièce','Désignation','Modèle moteur','Numéro moteur','Numéro étiquette','Type','Date fabrication','Lot','Fournisseur','Date scan'];let esc=v=>'"'+String(v??'').replace(/"/g,'""')+'"';download('stockscan-moteurs.csv','\ufeff'+[names,...data.map(r=>fields.map(k=>r[k]))].map(row=>row.map(esc).join(';')).join('\r\n'),'text/csv;charset=utf-8')};
+$('exportJson').onclick=()=>download('stockscan-sauvegarde.json',JSON.stringify(data,null,2),'application/json');
+$('importJson').onchange=async e=>{try{let v=JSON.parse(await e.target.files[0].text());if(!Array.isArray(v)||v.some(r=>!valid(r.num)||!r.ref)||new Set(v.map(r=>r.num)).size!==v.length)throw Error('Format invalide ou doublons');if(!confirm('Remplacer les données locales par cette sauvegarde ?'))return;data=v;persist()}catch(e){alert('Import impossible : '+e.message)}};
+async function ocr(fileId,output,isCol){let file=$(fileId).files[0];if(!file)return alert('Sélectionnez une photo.');let b=document.activeElement;b.disabled=true;b.textContent='Lecture OCR en cours…';try{if(!window.Tesseract){await new Promise((resolve,reject)=>{let s=document.createElement('script');s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';s.onload=resolve;s.onerror=reject;document.head.appendChild(s)})}
+let result=await Tesseract.recognize(file,'eng');let text=result.data.text;let found=nums(text);if(isCol){$(output).value=found.join('\n');let qty=text.match(/(?:QTY|QUANTIT[EÉ]|QT[EÉ])\s*[: ]\s*(\d+)/i);if(qty)$('cQty').value=qty[1];$('cNums').oninput()}else if(found.length)$(output).value=found[0];else alert('Numéro non reconnu. Saisissez-le manuellement.')}catch(e){alert('OCR indisponible : '+e.message)}finally{b.disabled=false;b.textContent=isCol?'Lire l’étiquette (OCR)':'Lire le numéro (OCR)'}}
+$('ocrCol').onclick=()=>ocr('fcol','cNums',true);$('ocrIso').onclick=()=>ocr('fiso','iNum',false);refresh();
+</script></body></html>
